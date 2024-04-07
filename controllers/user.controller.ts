@@ -13,6 +13,7 @@ import { redis } from "../utils/redis";
 import { decode } from "punycode";
 import { getUserById } from "../services/user.service";
 import { log } from "console";
+import {v2 as cloudinary} from 'cloudinary';
 
 interface IRegistrationBody{
     name: string;
@@ -387,7 +388,7 @@ export const socialAuth = CatchAsyncError(async(req:Request, res:Response, next:
  })
 
 
- //update profile picture or avatar
+ //update profile picture or avatar //this has nothing to do with social auth those are separate
  //we'll store it in cloudinary
  interface IUpdateProfilePicture{
     avatar:string;
@@ -395,8 +396,56 @@ export const socialAuth = CatchAsyncError(async(req:Request, res:Response, next:
 
  export const updateProfilePicture = CatchAsyncError(async(req:Request, res:Response,next:NextFunction) =>{
     try {
+        //we'll have to get the image from client(body)so
+        const {avatar} = req.body;
 
+        const user = await userModel.findById(req.user?._id);
+    if(avatar && user){
+          // Upload the image if there isn't any
+        if(user?.avatar?.public_id){  //user?.avatar as set on the mongo file
+            // we didn't use  // // cloudinary.v2.uploader.destroy()
+            //as we've importe the v2 directry as cloudinary.
+            //first delete old image
+            await cloudinary.uploader.destroy(user?.avatar?.public_id) //(, resource_type: 'image') we'll see it later
+            
+            //then upload the new one
+             // await cloudinary.uploader.upload(imagePath, options);
+            //*** above line is wrong we won't upload from user?.avatar as it's our previous one */
+            //we'll get it form the (client)body
+            const result = await cloudinary.uploader.upload(avatar,{
+                folder:"avaters",
+                width: 150
+            });
+
+            user.avatar = {
+                public_id: result.public_id,
+                url: result.secure_url
+            }
+          }else{
+            const result = await cloudinary.uploader.upload(avatar,{
+                folder:"avaters",
+                width: 150
+            });
+
+            user.avatar = {
+                public_id: result.public_id,
+                url: result.secure_url
+            }
         
+          }
+      }
+
+      //save to mongo
+      await user?.save()
+
+      //save to redis
+      await redis.set(req.user?._id, JSON.stringify(user))
+        
+      res.status(200).json({
+            success: true,
+            user
+      })
+
     } catch (error:any) {
         return next(new ErrorHandler(error.message,400))
     }
