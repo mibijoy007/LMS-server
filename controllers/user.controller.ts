@@ -207,6 +207,8 @@ export const updateAccessToken = CatchAsyncError(async(req:Request, res:Response
         }
 
         const user = JSON.parse(session)
+
+        req.user = user
         
         const accessToken =jwt.sign({id:user._id},process.env.SIGN_IN_OUT_ACCESS_TOKEN as string,
             {
@@ -253,9 +255,16 @@ export const getUserInfo = CatchAsyncError(async(req:Request,res:Response, next:
 
 
 //social auth (get name,mail,image(avatar) form the socials using nextAuth)then we'll create the user
+interface ISocialAuth {
+    name:string;
+    email: string;
+    avatar: string;
+}
+
+
 export const socialAuth = CatchAsyncError(async(req:Request, res:Response, next:NextFunction) =>{
     try {
-        const {email,name,avatar} = req.body
+        const {email,name,avatar} = req.body as ISocialAuth
         const user = await userModel.findOne({email});
         if(!user){
             const newUser = await userModel.create({email,name,avatar})
@@ -266,3 +275,129 @@ export const socialAuth = CatchAsyncError(async(req:Request, res:Response, next:
         return next(new ErrorHandler(error.message,400))
     }
 })
+
+
+
+//update user info
+ interface IUpdateUserInfo{
+    name?: string;
+    email?: string;
+ }
+
+ export const updateUserInfo = CatchAsyncError(async(req:Request, res:Response, next:NextFunction) => {
+   try {
+    const {name, email} = req.body as IUpdateUserInfo
+
+    const userId =  req.user?._id; //req.user not req.body
+    console.log('req.user=====>',req.user);
+    
+    const user = await userModel.findById(userId)
+    console.log('user=====>',user);
+    // const user = req.user //this is not used as we need to make sure we are not forgetting about mongoose!!
+
+    if(email && user){
+        const isEmailExist = await userModel.findOne({email})
+        if(isEmailExist){
+            return next(new ErrorHandler("Email already exist",400))
+        }
+        user.email = email;
+    }
+    if(name && user){
+        const isNameExist = await userModel.findOne({name})
+        if(isNameExist){
+            return next(new ErrorHandler("Name already exist",400))
+        }
+        user.name = name;
+    }
+
+    // now save this on mongoose
+    await user?.save();
+
+    // update it on redis
+    await redis.set(userId,JSON.stringify(user));
+    
+    console.log('useron redis=====>',user);
+
+    res.status(201).json({
+        success: true,
+        user
+    })
+
+   } catch (error:any) {
+    return next(new ErrorHandler(error.message,400))
+   }
+
+ })
+
+
+ //update password
+ interface IUpdateUserPassword{
+    oldPassword: string;
+    newPassword: string;
+ }
+
+ export const updateUserPassword = CatchAsyncError(async(req:Request, res:Response, next:NextFunction) => {
+    try {
+        const {oldPassword,newPassword} = req.body as IUpdateUserPassword;
+
+        //no black field
+        if(!oldPassword || !newPassword){
+            return next(new ErrorHandler("Enter both old and new password",400))
+        }
+        // // we won't get user like this
+        // const user = req.user
+
+        // // we'll get it from redis
+        // const user = await redis.get(req.user?_id)
+
+        //either of the above is not working (user)
+        //so we'll try this
+        //here we didn't use the redis on as the password has to de decrypted we used "bcrypt" and we used it in our "mongo" schem/model that's why we are no using (redis) one
+        const user = await userModel?.findById(req.user?._id).select("+password")
+        // console.log("========>",user);
+
+        //this is writen so that user is not undefined
+        if(user?.password === undefined){
+            return next(new ErrorHandler("Invalid user",400))
+        }
+
+        const isPasswordMatch = await user?.comparePassword(oldPassword)
+        if(!isPasswordMatch){
+            return next(new ErrorHandler("Invalid old password",400))
+        }
+
+        //set the user password
+        user.password = newPassword //showing undefined so we had to go 5 lines up
+
+        //save the user to 'mongoDB'
+        await user.save();
+
+        //Also update this on redis
+        await redis.set(req.user?._id, JSON.stringify(user))
+
+        //provide the response
+        res.status(201).json({
+            success: true,
+            user
+        })
+
+    } catch (error:any) {
+        return next(new ErrorHandler(error.message,400))
+    }
+ })
+
+
+ //update profile picture or avatar
+ //we'll store it in cloudinary
+ interface IUpdateProfilePicture{
+    avatar:string;
+ }
+
+ export const updateProfilePicture = CatchAsyncError(async(req:Request, res:Response,next:NextFunction) =>{
+    try {
+
+        
+    } catch (error:any) {
+        return next(new ErrorHandler(error.message,400))
+    }
+ })
