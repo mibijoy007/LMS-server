@@ -438,7 +438,7 @@ export const socialAuth = CatchAsyncError(async(req:Request, res:Response, next:
       //save to mongo
       await user?.save()
 
-      //save to redis
+      //save to reis
       await redis.set(req.user?._id, JSON.stringify(user))
         
       res.status(200).json({
