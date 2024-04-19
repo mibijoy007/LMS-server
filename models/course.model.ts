@@ -56,6 +56,8 @@ interface ICourse extends Document{
 
 //interfaces done
 
+
+//the followings are schemas
 const rewiewSchema = new Schema<IReview>({
     user: Object,
     rating:{
@@ -78,7 +80,9 @@ const commentSchema = new Schema<IComment> ({
 
 const courseDataSchema = new Schema<ICourseData>({
     videoUrl: String,
-    videoThumbnail: Object, 
+    title: String,
+    description: String,
+    // videoThumbnail: Object, 
     videoSection: String,
     videoLength: Number,
     videoPlayer: String,
@@ -107,11 +111,11 @@ const courseSchema = new Schema<ICourse>({
     thumbnail: {
         public_id:{
             type: String,
-            required: true,
+            // required: true,
         },
         url: {
             type: String,
-            required: true,
+            // required: true,
         },
     },
     tags: {
@@ -124,7 +128,7 @@ const courseSchema = new Schema<ICourse>({
     },
     demoUrl: {
         type: String,
-        required: true,
+        // required: true,
     },
     benefits: [{title: String}],
     prerequisites: [{title: String}],
@@ -140,6 +144,6 @@ const courseSchema = new Schema<ICourse>({
     }
 })
 
-const CouseModel: Model<ICourse> = mongoose.model("Course", courseSchema);
+const CourseModel: Model<ICourse> = mongoose.model("Course", courseSchema);
 
-export default CouseModel;
+export default CourseModel;

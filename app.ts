@@ -7,6 +7,7 @@ import cors from "cors"
 import cookieParser from "cookie-parser"
 import { ErrorMiddleware } from "./middleware/error"
 import userRouter from "./routes/user.routes"
+import courseRouter from "./routes/course.routers"
 
 
 
@@ -46,3 +47,5 @@ app.use(ErrorMiddleware) //not 'ErrorHandler'
 
 //routes
 app.use("/api/v1",userRouter)
+
+app.use("/api/v1",courseRouter)
