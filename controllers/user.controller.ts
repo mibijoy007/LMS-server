@@ -450,3 +450,5 @@ export const socialAuth = CatchAsyncError(async(req:Request, res:Response, next:
         return next(new ErrorHandler(error.message,400))
     }
  })
+
+ 
