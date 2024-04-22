@@ -2,12 +2,13 @@ require('dotenv').config()
 
 import mongoose, { Schema , Document, Model } from "mongoose";
 import { Extension } from "typescript";
+import { IUser } from "./user.model";
 
 //for the comment replies
 interface IComment extends Document{
-    user: object;
-    comment: string;
-    commentReplies?: IComment[];
+    user: IUser;
+    question : string;
+    questionReplies: IComment[];
 }
 //review for the course
 interface IReview extends Document{
@@ -49,7 +50,7 @@ interface ICourse extends Document{
     benefits: {title:string[]};
     prerequisites: {title: string[]};
     reviews: IReview[];
-    courseData: ICourseData; //ICourseData[]
+    courseData: ICourseData[]; //ICourseData
     ratings?: number;
     purchased?: number;
 }
@@ -74,8 +75,8 @@ const linkSchema = new Schema<ILink> ({
 
 const commentSchema = new Schema<IComment> ({
     user: Object,
-    comment:String,
-    commentReplies: [Object]
+    question: String,
+    questionReplies: [Object]
 })
 
 const courseDataSchema = new Schema<ICourseData>({

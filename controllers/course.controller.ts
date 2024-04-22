@@ -5,6 +5,11 @@ import {v2 as cloudinary} from 'cloudinary';
 import { createCourse } from "../services/course.service";
 import CourseModel from "../models/course.model";
 import { redis } from "../utils/redis";
+import mongoose from "mongoose";
+import { title } from "process";
+import path from "path";
+import ejs from "ejs"
+import sendMail from "../utils/sendMail";
 
 //create course
 export const uploadCourse = CatchAsyncError(async(req:Request, res:Response, next: NextFunction) =>{
@@ -150,7 +155,7 @@ export const getCourseByUser =  CatchAsyncError(async(req:Request, res:Response,
             return next(new ErrorHandler("You are not allowed to access the course",404))
         }
 
-        
+
         const course = await CourseModel.findById(courseId)
         const courseContent = course?.courseData;
         res.status(200).json({
@@ -158,6 +163,145 @@ export const getCourseByUser =  CatchAsyncError(async(req:Request, res:Response,
             courseContent
         })
 
+
+    } catch (error:any) {
+        return next(new ErrorHandler(error.message,500))
+    }
+})
+
+
+
+// add question (after purchasing)
+interface IAddQuestionData {
+    question:string;
+    courseId:string;
+    contentId:string;
+}
+//courseId - for all
+//contentId - for purchased only
+export const addQuestion =  CatchAsyncError(async(req:Request, res:Response, next:NextFunction) =>{
+    try {
+        const {question, courseId,contentId}:IAddQuestionData =req.body;
+        const course = await CourseModel.findById(courseId)
+
+        if(!mongoose.Types.ObjectId.isValid(contentId)){
+            return next(new ErrorHandler("Invalid content id",400))
+        }
+
+        const courseContent = course?.courseData?.find((item:any) => item._id.toString() === contentId)
+        // console.log('jjjjj',courseContent);
+        
+        if(!courseContent){
+            return next(new ErrorHandler("Invalid content access for question",400))
+        }
+
+        //create a new quesiton
+        const newQuestion:any ={
+            user:req.user,
+            question,
+            quesitonReplies:[]
+        }
+
+        //add this to our course content
+        courseContent.questions.push(newQuestion);
+
+        //save the updated course
+        await course?.save();
+
+        res.status(200).json({
+            success:true,
+            course
+        })
+
+    } catch (error:any) {
+        return next(new ErrorHandler(error.message,500))
+    }
+})
+
+
+
+//add replies
+
+interface IAddReplyData {
+    reply:string;
+    courseId:string;
+    contentId:string;
+    questionId:string;
+}
+//courseId - for all
+//contentId - for purchased only
+export const addReply =  CatchAsyncError(async(req:Request, res:Response, next:NextFunction) =>{
+    try {
+        const {reply, courseId,contentId,questionId}:IAddReplyData =req.body;
+        const course = await CourseModel.findById(courseId)
+
+        if(!mongoose.Types.ObjectId.isValid(contentId)){
+            return next(new ErrorHandler("Invalid content id",400))
+        }
+
+        const courseContent = course?.courseData?.find((item:any) => item._id.toString() === contentId)
+        // console.log('jjjjj',courseContent);
+        
+        if(!courseContent){
+            return next(new ErrorHandler("Invalid content access for question",400))
+        }
+
+        const question = courseContent?.questions?.find((item:any) => item._id.toString() === questionId)
+        if(!question){
+            return next(new ErrorHandler("Invalid for question",400))
+        }
+
+        //create a new reply
+        const newReply:any ={
+            user:req.user,
+            reply,
+            
+        }
+
+        //add this to our question object
+        question.questionReplies.push(newReply);
+
+        //save the updated course
+        await course?.save();
+
+
+        //notificaiton
+        if(req.user?._id === question.user._id.toString()){
+            //we'll do a notification to the admin dashboard
+            // console.log("self question-answer");
+            
+        }
+        else{
+            //we'll send an email to the user who asked the question
+
+            const data ={
+                name: question.user.name,
+                title: courseContent.title,
+            }
+
+            const html = await ejs.renderFile(path.join(__dirname,"../emails/question-reply.ejs"),data)
+
+            //we'll need to do another try-catch
+            try {
+                await sendMail({
+                    email: question.user.email,
+                    subject: "Reply to your question",
+                    template: "question-reply.ejs",
+                    data,
+                })
+                // console.log("user question and instructor answer to :",question.user.email);
+
+
+            } catch (error:any) {
+                return next(new ErrorHandler(error.message,500))
+            }
+        }
+
+
+        res.status(200).json({
+            success:true,
+            course
+        })
 
     } catch (error:any) {
         return next(new ErrorHandler(error.message,500))
