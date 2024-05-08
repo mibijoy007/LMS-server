@@ -307,3 +307,107 @@ export const addReply =  CatchAsyncError(async(req:Request, res:Response, next:N
         return next(new ErrorHandler(error.message,500))
     }
 })
+
+
+interface IAddReview{
+    review: string;
+    rating: number;
+    userId: string;
+}
+//Add review & reply reviews
+export const  addReview = CatchAsyncError(async(req:Request, res:Response, next:NextFunction) =>{
+    try {
+        const userCoursesList = req.user?.courses;
+        const courseId = req.params.id
+
+        //checking if the user has access to the course
+        const courseExists = userCoursesList?.some((course:any)=> course._id.toString() === courseId.toString())
+        if(!courseExists){
+            return next(new ErrorHandler("You don't have access to this course",404))
+        }
+
+        const course = await CourseModel.findById(courseId)
+        const {review, rating} = req.body as IAddReview;
+
+        const reviewData:any ={
+            user : req.user,
+            comment: review, 
+            rating
+        }
+
+        course?.reviews.push(reviewData)
+
+        //let's get an avarage rating for a course from all the ratings
+        let avg = 0;
+        course?.reviews.forEach((review:any) => avg += review.rating)
+        if(course){
+            course.ratings = avg / course.reviews.length
+        }
+
+        await course?.save();
+
+        //notification
+        const notificaiton = {
+            title : "New Review Received",
+            message:  `${req.user?.name} has given a review on the course: ${course?.name}`
+        }
+
+        //need to do the (model) for the 'notification' (due)
+        
+        
+        //done
+        res.status(200).json({
+            success: true,
+            course
+        })
+
+
+    } catch (error:any) {
+        return next(new ErrorHandler(error.message,500))
+    }
+})
+
+
+//add reply to review (as course-creator)
+interface IAddReviewData{
+    comment: string;
+    courseId: string;
+    reviewId: string;
+}
+export const addReplyToReview = CatchAsyncError(async(req:Request, res:Response, next:NextFunction)=>{
+    try {
+        const {comment, courseId, reviewId} = req.body as IAddReviewData
+
+        const course = await CourseModel.findById(courseId);
+        if(!course){
+            return next(new ErrorHandler("Course not found", 404))
+        }
+
+        //let's find the desired 'review' object
+        const review = course?.reviews?.find((review:any) => review._id.toString() === reviewId)
+        if(!review){
+            return next(new ErrorHandler("Review not found", 404))
+        }
+
+        const replyData: any = {
+            user: req.user,
+            comment
+        }
+
+        // course.reviews.push(replyData) //wrong
+        if(!review.commentReplies){
+            review.commentReplies =[]
+        }
+        review.commentReplies?.push(replyData)
+
+        await course.save()
+
+        res.status(200).json({
+            success: true,
+            course
+        })
+
+    } catch (error:any) {
+        return next(new ErrorHandler(error.message, 500))
+    }
+})
