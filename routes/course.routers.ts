@@ -7,6 +7,7 @@ import { ADDRCONFIG } from 'dns';
 const courseRouter = express.Router();
 
 courseRouter.post('/create-course', isAuthenticated, authRoles("admin") , uploadCourse)
+
 courseRouter.put('/edit-course/:id', isAuthenticated, authRoles("admin") , editCourse)
 
 courseRouter.get('/get-course-unpurchased/:id', getSingleCourse)
