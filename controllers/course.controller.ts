@@ -10,6 +10,7 @@ import { title } from "process";
 import path from "path";
 import ejs from "ejs"
 import sendMail from "../utils/sendMail";
+import NotificationModel from "../models/notification.model";
 
 //create course
 export const uploadCourse = CatchAsyncError(async(req:Request, res:Response, next: NextFunction) =>{
@@ -205,6 +206,14 @@ export const addQuestion =  CatchAsyncError(async(req:Request, res:Response, nex
         //add this to our course content
         courseContent.questions.push(newQuestion);
 
+        
+        //add notification
+        await NotificationModel.create({
+            title: `New question asked`,
+            message: `Your have a new question asked for ${courseContent.title}`,  
+            userId: req.user?._id
+        })
+
         //save the updated course
         await course?.save();
 
@@ -267,8 +276,13 @@ export const addReply =  CatchAsyncError(async(req:Request, res:Response, next:N
 
         //notificaiton
         if(req.user?._id === question.user._id.toString()){
-            //we'll do a notification to the admin dashboard
-            // console.log("self question-answer");
+              //add notification
+            await NotificationModel.create({
+                title: `Reply received`,
+                message: `Your have received a reply for the question ${question.question} on the ${courseContent.title} page`,  
+                userId: req.user?._id
+        })
+            // console.log("qqqqqqqqqqqqqq==>",question.question
             
         }
         else{

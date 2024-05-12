@@ -79,9 +79,9 @@ export const createOrder = CatchAsyncError(async(req:Request, res:Response, next
         })
 
         
-        if(course) {
-            course.purchased! += 1  
-        }
+            if(course) {
+                course.purchased! += 1   // used "!" to avoid the undefined problem as it's default 0.
+            }
         //update the purchased course number
         // course.purchased ? course.purchased +=1 : course.purchased ;
 
