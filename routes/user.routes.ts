@@ -1,5 +1,5 @@
 import express from 'express'
-import { activateUser, getUserInfo, loginUser, logoutUser, registrationUser, updateAccessToken, updateProfilePicture, updateUserInfo, updateUserPassword } from '../controllers/user.controller';
+import { activateUser, getAllUsers, getUserInfo, loginUser, logoutUser, registrationUser, updateAccessToken, updateProfilePicture, updateUserInfo, updateUserPassword } from '../controllers/user.controller';
 import { authRoles, isAuthenticated } from '../middleware/auth';
 import { addReview } from '../controllers/course.controller';
 
@@ -23,6 +23,10 @@ userRouter.put('/update-user-info', isAuthenticated, updateUserInfo)
 userRouter.put('/update-user-password', isAuthenticated, updateUserPassword)
 
 userRouter.put('/update-user-avatar', isAuthenticated, updateProfilePicture)
+
+
+//get all users ((admin only))
+userRouter.get('/get-all-users',isAuthenticated,authRoles("admin"), getAllUsers)
 
 
 

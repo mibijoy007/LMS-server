@@ -113,7 +113,7 @@ export const getSingleCourse = CatchAsyncError(async(req:Request, res:Response, 
 
 
 //get all courses
-export const getAllCourses =  CatchAsyncError(async(req:Request, res:Response, next:NextFunction) =>{
+export const getAllCoursesUnpurchased =  CatchAsyncError(async(req:Request, res:Response, next:NextFunction) =>{
     try {
         const doesCacheExist = await redis.get("allCourses")
         if(doesCacheExist){
@@ -425,3 +425,19 @@ export const addReplyToReview = CatchAsyncError(async(req:Request, res:Response,
         return next(new ErrorHandler(error.message, 500))
     }
 })
+
+
+
+ //get all courses  >>> only to auth("admin")
+ export const getAllCourses =  CatchAsyncError(async(req:Request, res:Response,next:NextFunction) =>{
+    try {
+        const allCourses = await CourseModel.find().sort({createdAt: -1}) // to reverse the whole thing
+
+        res.status(201).json({
+            success: true,
+            allCourses
+        })
+    } catch (error:any) {
+        return next(new ErrorHandler(error.message,400))
+    }
+ })

@@ -451,4 +451,19 @@ export const socialAuth = CatchAsyncError(async(req:Request, res:Response, next:
     }
  })
 
+
+ //get all users  >>> only to auth("admin")
+ export const getAllUsers =  CatchAsyncError(async(req:Request, res:Response,next:NextFunction) =>{
+    try {
+        const allUsers = await userModel.find().sort({createdAt: -1}) // to reverse the whole thing
+
+        res.status(201).json({
+            success: true,
+            allUsers
+        })
+    } catch (error:any) {
+        return next(new ErrorHandler(error.message,400))
+    }
+ })
+
  

@@ -1,7 +1,7 @@
 import express from 'express'
 import { activateUser, getUserInfo, loginUser, logoutUser, registrationUser, updateAccessToken, updateProfilePicture, updateUserInfo, updateUserPassword } from '../controllers/user.controller';
 import { authRoles, isAuthenticated } from '../middleware/auth';
-import { addQuestion, addReply, addReplyToReview, addReview, editCourse, getAllCourses, getCourseByUser, getSingleCourse, uploadCourse } from '../controllers/course.controller';
+import { addQuestion, addReply, addReplyToReview, addReview, editCourse, getAllCourses, getAllCoursesUnpurchased, getCourseByUser, getSingleCourse, uploadCourse } from '../controllers/course.controller';
 import { ADDRCONFIG } from 'dns';
 
 const courseRouter = express.Router();
@@ -12,7 +12,7 @@ courseRouter.put('/edit-course/:id', isAuthenticated, authRoles("admin") , editC
 
 courseRouter.get('/get-course-unpurchased/:id', getSingleCourse)
 
-courseRouter.get('/get-all-courses-unpurchased', getAllCourses)
+courseRouter.get('/get-all-courses-unpurchased', getAllCoursesUnpurchased)
 
 courseRouter.get('/get-course-content-purchased/:id',isAuthenticated, getCourseByUser)
 
@@ -23,6 +23,9 @@ courseRouter.put('/add-reply-to-question',isAuthenticated, addReply)
 courseRouter.put('/add-review/:id',isAuthenticated, addReview)
 
 courseRouter.put('/add-reply-to-review',isAuthenticated,authRoles("admin"), addReplyToReview)
+
+//get all courses (both purchased and unpurchased) ((admin only))
+courseRouter.get('/get-all-courses',isAuthenticated,authRoles("admin"), getAllCourses)
 
 
 

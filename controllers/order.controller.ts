@@ -102,3 +102,18 @@ export const createOrder = CatchAsyncError(async(req:Request, res:Response, next
         return next(new ErrorHandler(error.message,500)) 
     }
 })
+
+
+//get all orders  >>> only to auth("admin")
+export const getAllOrders =  CatchAsyncError(async(req:Request, res:Response,next:NextFunction) =>{
+    try {
+        const allOrders = await OrderModel.find().sort({createdAt: -1}) // to reverse the whole thing
+
+        res.status(201).json({
+            success: true,
+            allOrders
+        })
+    } catch (error:any) {
+        return next(new ErrorHandler(error.message,400))
+    }
+ })
