@@ -1,7 +1,7 @@
 import express from 'express'
 import { activateUser, getUserInfo, loginUser, logoutUser, registrationUser, updateAccessToken, updateProfilePicture, updateUserInfo, updateUserPassword } from '../controllers/user.controller';
 import { authRoles, isAuthenticated } from '../middleware/auth';
-import { addQuestion, addReply, addReplyToReview, addReview, editCourse, getAllCourses, getAllCoursesUnpurchased, getCourseByUser, getSingleCourse, uploadCourse } from '../controllers/course.controller';
+import { addQuestion, addReply, addReplyToReview, addReview, deleteCourse, editCourse, getAllCourses, getAllCoursesUnpurchased, getCourseByUser, getSingleCourse, uploadCourse } from '../controllers/course.controller';
 import { ADDRCONFIG } from 'dns';
 
 const courseRouter = express.Router();
@@ -26,6 +26,8 @@ courseRouter.put('/add-reply-to-review',isAuthenticated,authRoles("admin"), addR
 
 //get all courses (both purchased and unpurchased) ((admin only))
 courseRouter.get('/get-all-courses',isAuthenticated,authRoles("admin"), getAllCourses)
+
+courseRouter.delete('/delete-course/:id',isAuthenticated,authRoles("admin"), deleteCourse)
 
 
 

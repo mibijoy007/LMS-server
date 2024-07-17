@@ -441,3 +441,32 @@ export const addReplyToReview = CatchAsyncError(async(req:Request, res:Response,
         return next(new ErrorHandler(error.message,400))
     }
  })
+
+
+
+ //delete course --admin only
+ export const deleteCourse = CatchAsyncError(async(req:Request, res:Response,next:NextFunction) =>{
+    try {
+        const {id} = req.params;
+
+        const course = await CourseModel.findById(id);
+        if(!course){
+            return next(new ErrorHandler("Course not found",404))
+        }
+
+        //delete from mongodb
+        const courseDelete = await CourseModel.deleteOne({_id:id});
+
+        // delete form redis
+        await redis.del(id);
+
+        res.status(200).json({
+            success: true,
+            message: `${courseDelete.deletedCount} course deleted`
+        })
+
+
+    } catch (error:any) {
+        return next(new ErrorHandler(error.message,400))
+    }
+ })

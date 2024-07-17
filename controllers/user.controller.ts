@@ -466,4 +466,57 @@ export const socialAuth = CatchAsyncError(async(req:Request, res:Response, next:
     }
  })
 
+
+
+ //update user 'role'  like (user to admin) or (admin to user)  --only accessible to "admin"
+export const updateUserRole = CatchAsyncError(async(req:Request, res:Response,next:NextFunction) =>{
+    try {
+        const {userId, role} = req.body;
+
+        const updatedUser = await userModel.findByIdAndUpdate(userId, {role}, {new:true} )  // The new: true option means that the method should return the updated document instead of the original one before the update. By default, findByIdAndUpdate returns the document as it was before the update.
+
+        res.status(201).json({
+            success: true,
+            updatedUser
+        })
+
+
+
+    } catch (error:any) {
+        return next(new ErrorHandler(error.message,400))
+    }
+ })
+
+
+
+ //delete user  --admin only
+ export const deleteUser = CatchAsyncError(async(req:Request, res:Response,next:NextFunction) =>{
+    try {
+        const {id} = req.params;
+        
+        // const user = await userModel.findByIdAndDelete(id); // there is a better way than this
+        
+        const user = await userModel.findById(id);
+
+        if(!user){
+            return next(new ErrorHandler("User not found",404))
+        }
+
+        //delete from mongo
+        const userDelete = await userModel.deleteOne({_id:id});
+        
+        //delete from redis
+        await redis.del(id)
+
+        res.status(200).json({
+            success: true,
+            message: `${userDelete.deletedCount} User deleted successfully`
+        })
+
+
+    } catch (error:any) {
+        return next(new ErrorHandler(error.message,400))
+    }
+ })
+
  

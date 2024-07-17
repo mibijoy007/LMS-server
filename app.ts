@@ -10,6 +10,8 @@ import userRouter from "./routes/user.routes"
 import courseRouter from "./routes/course.routers"
 import orderRouter from "./routes/order.routes"
 import notificationRouter from "./routes/notification.routes"
+import analyticsRouter from "./routes/analytics.routes"
+import layoutRouter from "./routes/layout.routes"
 
 
 
@@ -55,3 +57,7 @@ app.use("/api/v1",courseRouter)
 app.use("/api/v1",orderRouter)
 
 app.use("/api/v1",notificationRouter)
+
+app.use("/api/v1",analyticsRouter)
+
+app.use("/api/v1",layoutRouter)
